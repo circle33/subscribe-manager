@@ -10,7 +10,7 @@ const LOGIN_HTML = `<!doctype html>
     <main class="shell">
       <header class="header">
         <h1>Subscribe Manager</h1>
-        <p class="sub">订阅提醒软件</p>
+        <p class="sub">订阅提醒软件 </p>
       </header>
       <section class="card">
         <h2>Login</h2>
