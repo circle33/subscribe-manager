@@ -5,17 +5,30 @@ services:
     image: drone/drone:2
     restart: always
     ports:
-      - 8033:80          # 左边 8000 是你本机访问的端口，右边 80 是容器内
+      - 8033:80 # 左边 8000 是你本机访问的端口，右边 80 是容器内
     environment:
       - DRONE_GITHUB_CLIENT_ID=Ov23likAYBHtlWPFKzOQ
       - DRONE_GITHUB_CLIENT_SECRET=f8db085fd203d6b5efef570757405c2c361db24e
-      - DRONE_SERVER_HOST=https://yuri-archetypic-nontortuously.ngrok-free.dev     # 注意：没有 http://
+      - DRONE_SERVER_HOST=https://yuri-archetypic-nontortuously.ngrok-free.dev # 注意：没有 http://
       - DRONE_SERVER_PROTO=https
-      - DRONE_RPC_SECRET=4151675808cbf7b377b2700131f6c2c4   # 后面加 Runner 时要用
-      - DRONE_USER_CREATE=username:circle33,admin:true   # 可选，先给自己 admin 权限
-      - DRONE_LOGS_DEBUG=true   # 调试时打开，看日志方便
+      - DRONE_RPC_SECRET=4151675808cbf7b377b2700131f6c2c4 # 后面加 Runner 时要用
+      - DRONE_USER_CREATE=username:circle33,admin:true # 可选，先给自己 admin 权限
+      - DRONE_LOGS_DEBUG=true # 调试时打开，看日志方便
     volumes:
       - drone-data:/data
-
+  drone-runner-docker:
+    image: drone/drone-runner-docker:1
+    restart: always
+    depends_on:
+      - drone
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock # 重要！让 Runner 用宿主 Docker
+    environment:
+      - DRONE_RPC_PROTO=https
+      - DRONE_RPC_HOST=drone:80 # 注意：用服务名 drone + 容器内端口 80
+      - DRONE_RPC_SECRET=4151675808cbf7b377b2700131f6c2c4 # 必须和 Server 一样
+      - DRONE_RUNNER_CAPACITY=2 # 可选：允许同时跑几个 build
+      - DRONE_RUNNER_NAME=local-windows # 可选：给 Runner 起名
 volumes:
   drone-data:
+
