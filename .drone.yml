@@ -23,6 +23,8 @@ steps:
   - name: deploy-to-cloudflare
     image: oven/bun:1
     commands:
+      - corepack enable   # 启用 corepack（Node 自带工具），激活 npm/pnpm/yarn
+      - corepack prepare npm@latest --activate   # 可选，确保最新 npm
       # Bun 自带 wrangler 支持？目前 wrangler 还是 Node 包，但 Bun 可以完美兼容运行
       # - bunx wrangler@latest deploy --verbose  # 用 bunx 执行 wrangler（类似 npx），自动下载 wrangler
       # 或者先全局安装（如果项目依赖 wrangler）
