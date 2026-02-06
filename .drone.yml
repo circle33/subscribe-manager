@@ -21,7 +21,7 @@ steps:
         path: /root/.bun/install/cache
 
   - name: deploy-to-cloudflare
-    image: oven/bun:1
+    image: node:20-alpine  # 切换到 Node.js 镜像（Wrangler 官方支持）
     commands:
       - corepack enable   # 启用 corepack（Node 自带工具），激活 npm/pnpm/yarn
       - corepack prepare npm@latest --activate   # 可选，确保最新 npm
