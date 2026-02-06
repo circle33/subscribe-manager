@@ -1,0 +1,11 @@
+name = "subscribe-manager"
+main = "src/worker.js"
+compatibility_date = "2026-02-06"
+
+[[kv_namespaces]]
+binding = "SUBS_KV"
+id = "a4e10ce96170474fbd2f65b614d13f67"
+preview_id = "1fd627033f384c64be957349620e4b98"
+
+[triggers]
+crons = ["* * * * *"]
