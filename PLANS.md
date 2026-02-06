@@ -17,6 +17,8 @@ This ExecPlan guides the implementation of a simple subscription notification we
 - [ ] (Timestamp) Develop frontend HTML/JS for login, home page, settings, and modal. (Login + subscriptions + email settings implemented; settings modal TBD)
 - [x] (2026-02-06T14:26+08:00) Add API endpoints for managing subscriptions and emails. (Subscriptions CRUD implemented; email settings TBD)
 - [x] (2026-02-06T14:40+08:00) Integrate scheduled notifications using Cloudflare Cron Triggers.
+- [x] (2026-02-06T15:05+08:00) Fix frontend runtime error from invalid innerHTML string interpolation in worker-served JS.
+- [x] (2026-02-06T15:20+08:00) Split login, home, and settings into separate routes and scripts.
 - [ ] (Timestamp) Deploy and test end-to-end functionality.
 - [ ] (Timestamp) Add validation and error handling.
 

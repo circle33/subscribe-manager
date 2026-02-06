@@ -1,0 +1,21 @@
+version: '3'
+
+services:
+  drone:
+    image: drone/drone:2
+    restart: always
+    ports:
+      - 8033:80          # 左边 8000 是你本机访问的端口，右边 80 是容器内
+    environment:
+      - DRONE_GITHUB_CLIENT_ID=Ov23likAYBHtlWPFKzOQ
+      - DRONE_GITHUB_CLIENT_SECRET=f8db085fd203d6b5efef570757405c2c361db24e
+      - DRONE_SERVER_HOST=https://yuri-archetypic-nontortuously.ngrok-free.dev     # 注意：没有 http://
+      - DRONE_SERVER_PROTO=https
+      - DRONE_RPC_SECRET=4151675808cbf7b377b2700131f6c2c4   # 后面加 Runner 时要用
+      - DRONE_USER_CREATE=username:circle33,admin:true   # 可选，先给自己 admin 权限
+      - DRONE_LOGS_DEBUG=true   # 调试时打开，看日志方便
+    volumes:
+      - drone-data:/data
+
+volumes:
+  drone-data:

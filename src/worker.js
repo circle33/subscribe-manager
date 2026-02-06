@@ -1,16 +1,17 @@
-const HTML = `<!doctype html>
+
+const LOGIN_HTML = `<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Subscribe Manager</title>
+    <title>Subscribe Manager · Login</title>
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
     <main class="shell">
       <header class="header">
         <h1>Subscribe Manager</h1>
-        <p class="sub">Cloudflare Workers starter</p>
+        <p class="sub">Sign in to manage reminders.</p>
       </header>
       <section class="card">
         <h2>Login</h2>
@@ -26,42 +27,35 @@ const HTML = `<!doctype html>
           <button type="submit">Sign in</button>
           <p class="hint">Default account: admin / default</p>
         </form>
+        <div id="login-status" class="status" role="status" aria-live="polite"></div>
       </section>
-      <section class="card">
-        <h2>Account</h2>
-        <div id="auth-status" class="status">Not signed in</div>
-        <form id="password-form" class="stack" hidden>
-          <label>
-            Current password
-            <input name="currentPassword" type="password" autocomplete="current-password" />
-          </label>
-          <label>
-            New password
-            <input name="newPassword" type="password" autocomplete="new-password" />
-          </label>
-          <button type="submit">Change password</button>
-        </form>
-        <button id="logout-btn" type="button" hidden>Sign out</button>
-      </section>
-      <section class="card">
-        <h2>Email Settings</h2>
-        <form id="email-form" class="stack" hidden>
-          <label>
-            From email
-            <input name="fromEmail" type="email" placeholder="onboarding@resend.dev" />
-          </label>
-          <button type="submit">Save email settings</button>
-          <p class="hint">Use a verified domain, or the Resend test sender.</p>
-        </form>
-        <div id="email-status" class="status">Sign in to configure sender email.</div>
-      </section>
-      <section class="card">
-        <h2>Send Logs</h2>
-        <div id="log-list" class="list-empty">Sign in to view send logs.</div>
-      </section>
+    </main>
+    <script src="/app-login.js"></script>
+  </body>
+</html>
+`;
+
+const HOME_HTML = `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Subscribe Manager · Home</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="header">
+        <h1>Subscribe Manager</h1>
+        <p class="sub">Track what you pay for and when to remind you.</p>
+        <nav class="nav">
+          <a href="/settings">Settings</a>
+          <button id="logout-btn" type="button" class="ghost">Sign out</button>
+        </nav>
+      </header>
       <section class="card">
         <h2>Subscriptions</h2>
-        <form id="sub-form" class="stack" hidden>
+        <form id="sub-form" class="stack">
           <label>
             Title
             <input name="title" placeholder="Netflix" />
@@ -80,43 +74,122 @@ const HTML = `<!doctype html>
           </label>
           <button type="submit">Add subscription</button>
         </form>
-        <div id="sub-list" class="list-empty">Sign in to view subscriptions.</div>
+        <div id="sub-list" class="list-empty">Loading subscriptions...</div>
+      </section>
+      <section class="card">
+        <h2>Send Logs</h2>
+        <div id="log-list" class="list-empty">Loading logs...</div>
       </section>
       <section class="card">
         <h2>Health</h2>
         <div id="status">Checking...</div>
       </section>
     </main>
-    <script src="/app.js"></script>
+    <script src="/app-home.js"></script>
   </body>
 </html>
 `;
 
-const JS = `const statusEl = document.getElementById("status");
-const authStatusEl = document.getElementById("auth-status");
-const loginForm = document.getElementById("login-form");
-const passwordForm = document.getElementById("password-form");
+const SETTINGS_HTML = `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Subscribe Manager · Settings</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="header">
+        <h1>Settings</h1>
+        <p class="sub">Manage account and email preferences.</p>
+        <nav class="nav">
+          <a href="/">Home</a>
+          <button id="logout-btn" type="button" class="ghost">Sign out</button>
+        </nav>
+      </header>
+      <section class="card">
+        <h2>Account</h2>
+        <div id="auth-status" class="status">Signed in</div>
+        <form id="password-form" class="stack">
+          <label>
+            Current password
+            <input name="currentPassword" type="password" autocomplete="current-password" />
+          </label>
+          <label>
+            New password
+            <input name="newPassword" type="password" autocomplete="new-password" />
+          </label>
+          <button type="submit">Change password</button>
+        </form>
+      </section>
+      <section class="card">
+        <h2>Email Settings</h2>
+        <form id="email-form" class="stack">
+          <label>
+            From email
+            <input name="fromEmail" type="email" placeholder="onboarding@resend.dev" />
+          </label>
+          <button type="submit">Save email settings</button>
+          <p class="hint">Use a verified domain, or the Resend test sender.</p>
+        </form>
+        <div id="email-status" class="status">Loading sender email...</div>
+      </section>
+    </main>
+    <script src="/app-settings.js"></script>
+  </body>
+</html>
+`;
+
+const LOGIN_JS = `const loginForm = document.getElementById("login-form");
+const loginStatus = document.getElementById("login-status");
+
+function redirectHome() {
+  window.location.href = "/";
+}
+
+const token = localStorage.getItem("session_token");
+if (token) {
+  redirectHome();
+}
+
+loginForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  loginStatus.textContent = "";
+  const formData = new FormData(loginForm);
+  const payload = {
+    username: formData.get("username"),
+    password: formData.get("password"),
+  };
+  const res = await fetch("/api/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    loginStatus.textContent = data.error || "Login failed";
+    return;
+  }
+  localStorage.setItem("session_token", data.token);
+  localStorage.setItem("session_user", data.username);
+  redirectHome();
+});
+`;
+
+const HOME_JS = `const statusEl = document.getElementById("status");
 const logoutBtn = document.getElementById("logout-btn");
 const subForm = document.getElementById("sub-form");
 const subList = document.getElementById("sub-list");
-const emailForm = document.getElementById("email-form");
-const emailStatus = document.getElementById("email-status");
 const logList = document.getElementById("log-list");
 
-function setAuthedState(isAuthed, username) {
-  if (isAuthed) {
-    authStatusEl.textContent = "Signed in as " + username;
-    passwordForm.hidden = false;
-    logoutBtn.hidden = false;
-    subForm.hidden = false;
-    emailForm.hidden = false;
-  } else {
-    authStatusEl.textContent = "Not signed in";
-    passwordForm.hidden = true;
-    logoutBtn.hidden = true;
-    subForm.hidden = true;
-    emailForm.hidden = true;
-  }
+function redirectLogin() {
+  window.location.href = "/login";
+}
+
+const token = localStorage.getItem("session_token");
+if (!token) {
+  redirectLogin();
 }
 
 async function loadHealth() {
@@ -129,44 +202,7 @@ async function loadHealth() {
   }
 }
 
-async function loadSession() {
-  const token = localStorage.getItem("session_token");
-  const username = localStorage.getItem("session_user");
-  setAuthedState(Boolean(token), username || "");
-  if (token) {
-    await loadSubscriptions();
-    await loadEmailSettings();
-    await loadLogs();
-  } else {
-    subList.textContent = "Sign in to view subscriptions.";
-    emailStatus.textContent = "Sign in to configure sender email.";
-    logList.textContent = "Sign in to view send logs.";
-  }
-}
-
-async function loadEmailSettings() {
-  const token = localStorage.getItem("session_token");
-  if (!token) return;
-  const res = await fetch("/api/email-settings", {
-    headers: { Authorization: "Bearer " + token },
-  });
-  const data = await res.json();
-  if (!res.ok) {
-    emailStatus.textContent = data.error || "Failed to load email settings";
-    return;
-  }
-  if (data.fromEmail) {
-    emailForm.fromEmail.value = data.fromEmail;
-    emailStatus.textContent = "Sender email set to " + data.fromEmail;
-  } else {
-    emailForm.fromEmail.value = "onboarding@resend.dev";
-    emailStatus.textContent = "No sender email configured. Suggested: onboarding@resend.dev";
-  }
-}
-
 async function loadLogs() {
-  const token = localStorage.getItem("session_token");
-  if (!token) return;
   const res = await fetch("/api/logs", {
     headers: { Authorization: "Bearer " + token },
   });
@@ -183,19 +219,17 @@ async function loadLogs() {
   data.items.forEach((item) => {
     const row = document.createElement("div");
     row.className = "sub-row";
-    row.innerHTML = `
+    row.innerHTML = \`
       <div>
-        <div class="sub-title">${item.title}</div>
-        <div class="sub-meta">${item.toEmail} - ${item.status} - ${item.time}</div>
+        <div class="sub-title">\${item.title}</div>
+        <div class="sub-meta">\${item.toEmail} - \${item.status} - \${item.time}</div>
       </div>
-    `;
+    \`;
     logList.appendChild(row);
   });
 }
 
 async function loadSubscriptions() {
-  const token = localStorage.getItem("session_token");
-  if (!token) return;
   const res = await fetch("/api/subscriptions", {
     headers: { Authorization: "Bearer " + token },
   });
@@ -212,16 +246,16 @@ async function loadSubscriptions() {
   data.items.forEach((item) => {
     const row = document.createElement("div");
     row.className = "sub-row";
-    row.innerHTML = `
+    row.innerHTML = \`
       <div>
-        <div class="sub-title">${item.title}</div>
-        <div class="sub-meta">${item.email} - ${item.remindAt} - ${item.status || "pending"}</div>
+        <div class="sub-title">\${item.title}</div>
+        <div class="sub-meta">\${item.email} - \${item.remindAt} - \${item.status || "pending"}</div>
       </div>
       <div class="row-actions">
-        ${item.status === "failed" ? `<button class="ghost retry" data-id="${item.id}">Retry</button>` : ""}
-        <button class="ghost delete" data-id="${item.id}">Delete</button>
+        \${item.status === "failed" ? \`<button class="ghost retry" data-id="\${item.id}">Retry</button>\` : ""}
+        <button class="ghost delete" data-id="\${item.id}">Delete</button>
       </div>
-    `;
+    \`;
     const deleteBtn = row.querySelector("button.delete");
     deleteBtn.addEventListener("click", () => deleteSubscription(item.id));
     const retryBtn = row.querySelector("button.retry");
@@ -233,7 +267,6 @@ async function loadSubscriptions() {
 }
 
 async function retrySubscription(id) {
-  const token = localStorage.getItem("session_token");
   const res = await fetch("/api/subscriptions/" + id + "/retry", {
     method: "POST",
     headers: { Authorization: "Bearer " + token },
@@ -248,7 +281,6 @@ async function retrySubscription(id) {
 }
 
 async function deleteSubscription(id) {
-  const token = localStorage.getItem("session_token");
   const res = await fetch("/api/subscriptions/" + id, {
     method: "DELETE",
     headers: { Authorization: "Bearer " + token },
@@ -261,57 +293,8 @@ async function deleteSubscription(id) {
   await loadSubscriptions();
 }
 
-loginForm.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  const formData = new FormData(loginForm);
-  const payload = {
-    username: formData.get("username"),
-    password: formData.get("password"),
-  };
-  const res = await fetch("/api/login", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-  const data = await res.json();
-  if (!res.ok) {
-    alert(data.error || "Login failed");
-    return;
-  }
-  localStorage.setItem("session_token", data.token);
-  localStorage.setItem("session_user", data.username);
-  setAuthedState(true, data.username);
-  await loadSubscriptions();
-});
-
-passwordForm.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  const token = localStorage.getItem("session_token");
-  const formData = new FormData(passwordForm);
-  const payload = {
-    currentPassword: formData.get("currentPassword"),
-    newPassword: formData.get("newPassword"),
-  };
-  const res = await fetch("/api/password", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: "Bearer " + token,
-    },
-    body: JSON.stringify(payload),
-  });
-  const data = await res.json();
-  if (!res.ok) {
-    alert(data.error || "Password change failed");
-    return;
-  }
-  alert("Password updated");
-  passwordForm.reset();
-});
-
 subForm.addEventListener("submit", async (event) => {
   event.preventDefault();
-  const token = localStorage.getItem("session_token");
   const formData = new FormData(subForm);
   const payload = {
     title: formData.get("title"),
@@ -336,9 +319,84 @@ subForm.addEventListener("submit", async (event) => {
   await loadSubscriptions();
 });
 
+logoutBtn.addEventListener("click", async () => {
+  if (token) {
+    await fetch("/api/logout", {
+      method: "POST",
+      headers: { Authorization: "Bearer " + token },
+    });
+  }
+  localStorage.removeItem("session_token");
+  localStorage.removeItem("session_user");
+  redirectLogin();
+});
+
+loadSubscriptions();
+loadLogs();
+loadHealth();
+`;
+
+const SETTINGS_JS = `const authStatusEl = document.getElementById("auth-status");
+const passwordForm = document.getElementById("password-form");
+const logoutBtn = document.getElementById("logout-btn");
+const emailForm = document.getElementById("email-form");
+const emailStatus = document.getElementById("email-status");
+
+function redirectLogin() {
+  window.location.href = "/login";
+}
+
+const token = localStorage.getItem("session_token");
+const username = localStorage.getItem("session_user");
+if (!token) {
+  redirectLogin();
+}
+authStatusEl.textContent = "Signed in as " + (username || "");
+
+async function loadEmailSettings() {
+  const res = await fetch("/api/email-settings", {
+    headers: { Authorization: "Bearer " + token },
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    emailStatus.textContent = data.error || "Failed to load email settings";
+    return;
+  }
+  if (data.fromEmail) {
+    emailForm.fromEmail.value = data.fromEmail;
+    emailStatus.textContent = "Sender email set to " + data.fromEmail;
+  } else {
+    emailForm.fromEmail.value = "onboarding@resend.dev";
+    emailStatus.textContent = "No sender email configured. Suggested: onboarding@resend.dev";
+  }
+}
+
+passwordForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const formData = new FormData(passwordForm);
+  const payload = {
+    currentPassword: formData.get("currentPassword"),
+    newPassword: formData.get("newPassword"),
+  };
+  const res = await fetch("/api/password", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Bearer " + token,
+    },
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    alert(data.error || "Password change failed");
+    return;
+  }
+  alert("Password updated");
+  passwordForm.reset();
+});
+
 emailForm.addEventListener("submit", async (event) => {
   event.preventDefault();
-  const token = localStorage.getItem("session_token");
   const formData = new FormData(emailForm);
   const payload = {
     fromEmail: formData.get("fromEmail"),
@@ -360,7 +418,6 @@ emailForm.addEventListener("submit", async (event) => {
 });
 
 logoutBtn.addEventListener("click", async () => {
-  const token = localStorage.getItem("session_token");
   if (token) {
     await fetch("/api/logout", {
       method: "POST",
@@ -369,14 +426,10 @@ logoutBtn.addEventListener("click", async () => {
   }
   localStorage.removeItem("session_token");
   localStorage.removeItem("session_user");
-  setAuthedState(false, "");
-  subList.textContent = "Sign in to view subscriptions.";
-  emailStatus.textContent = "Sign in to configure sender email.";
-  logList.textContent = "Sign in to view send logs.";
+  redirectLogin();
 });
 
-loadSession();
-loadHealth();
+loadEmailSettings();
 `;
 
 const CSS = `:root {
@@ -410,6 +463,23 @@ body {
 .sub {
   margin: 4px 0 0;
   color: #475569;
+}
+
+.nav {
+  margin-top: 12px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.nav a {
+  color: #2563eb;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.nav a:hover {
+  text-decoration: underline;
 }
 
 .card {
@@ -685,10 +755,22 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     if (url.pathname === "/") {
-      return textResponse(HTML, "text/html; charset=utf-8");
+      return textResponse(HOME_HTML, "text/html; charset=utf-8");
     }
-    if (url.pathname === "/app.js") {
-      return textResponse(JS, "text/javascript; charset=utf-8");
+    if (url.pathname === "/login") {
+      return textResponse(LOGIN_HTML, "text/html; charset=utf-8");
+    }
+    if (url.pathname === "/settings") {
+      return textResponse(SETTINGS_HTML, "text/html; charset=utf-8");
+    }
+    if (url.pathname === "/app-login.js") {
+      return textResponse(LOGIN_JS, "text/javascript; charset=utf-8");
+    }
+    if (url.pathname === "/app-home.js") {
+      return textResponse(HOME_JS, "text/javascript; charset=utf-8");
+    }
+    if (url.pathname === "/app-settings.js") {
+      return textResponse(SETTINGS_JS, "text/javascript; charset=utf-8");
     }
     if (url.pathname === "/styles.css") {
       return textResponse(CSS, "text/css; charset=utf-8");

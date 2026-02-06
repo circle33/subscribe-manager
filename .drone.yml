@@ -1,0 +1,41 @@
+kind: pipeline
+type: docker
+name: deploy-worker-with-bun
+
+steps:
+  - name: install-deps
+    image: oven/bun:1  # 或 oven/bun:1-alpine（更小、更快），推荐用最新 tag 如 oven/bun:1.1 或 oven/bun:latest
+    commands:
+      - bun install --frozen-lockfile  # --frozen-lockfile 类似 npm ci，强制用 bun.lockb，不更新 lockfile
+    volumes:
+      - name: bun-cache
+        path: /root/.bun/install/cache  # 加速后续构建，可选但强烈推荐
+
+  - name: lint-and-test  # 可选，如果你有 lint/test 脚本
+    image: oven/bun:1
+    commands:
+      - bun run lint    # 或 bun run test
+      - bun run test
+    volumes:
+      - name: bun-cache
+        path: /root/.bun/install/cache
+
+  - name: deploy-to-cloudflare
+    image: oven/bun:1
+    commands:
+      # Bun 自带 wrangler 支持？目前 wrangler 还是 Node 包，但 Bun 可以完美兼容运行
+      - bunx wrangler@latest deploy  # 用 bunx 执行 wrangler（类似 npx），自动下载 wrangler
+      # 或者先全局安装（如果项目依赖 wrangler）
+      # - bun add -d wrangler
+      # - bun wrangler deploy
+    environment:
+      CLOUDFLARE_API_TOKEN:
+        from_secret: cf_api_token
+      CLOUDFLARE_ACCOUNT_ID:
+        from_secret: cf_account_id  # 如果 wrangler.toml 没写 account_id
+    when:
+      branch: main  # 只在 main 分支自动部署（可选，PR 时只跑前面的步骤）
+
+volumes:
+  - name: bun-cache
+    temp: {}  # Drone 的临时 volume，构建间共享缓存
