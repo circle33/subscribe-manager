@@ -24,7 +24,7 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock # 重要！让 Runner 用宿主 Docker
     environment:
-      - DRONE_RPC_PROTO=https
+      - DRONE_RPC_PROTO=http
       - DRONE_RPC_HOST=drone:80 # 注意：用服务名 drone + 容器内端口 80
       - DRONE_RPC_SECRET=4151675808cbf7b377b2700131f6c2c4 # 必须和 Server 一样
       - DRONE_RUNNER_CAPACITY=2 # 可选：允许同时跑几个 build
