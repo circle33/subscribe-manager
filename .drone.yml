@@ -24,7 +24,7 @@ steps:
     image: oven/bun:1
     commands:
       # Bun 自带 wrangler 支持？目前 wrangler 还是 Node 包，但 Bun 可以完美兼容运行
-      - bunx wrangler@latest deploy  # 用 bunx 执行 wrangler（类似 npx），自动下载 wrangler
+      - bunx wrangler@latest deploy --verbose  # 用 bunx 执行 wrangler（类似 npx），自动下载 wrangler
       # 或者先全局安装（如果项目依赖 wrangler）
       # - bun add -d wrangler
       # - bun wrangler deploy
